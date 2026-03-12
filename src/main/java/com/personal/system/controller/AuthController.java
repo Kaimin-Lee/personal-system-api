@@ -1,14 +1,16 @@
 package com.personal.system.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.personal.system.entity.User;
 import com.personal.system.service.IUserService;
+import com.personal.system.utils.JwtUtils;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
-import com.personal.system.entity.User;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +30,6 @@ public class AuthController {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    // 简易内存缓存，用于存储邮箱验证码 (生产环境建议用Redis)
     private final Map<String, String> codeCache = new ConcurrentHashMap<>();
 
     /**
@@ -39,17 +40,14 @@ public class AuthController {
         Map<String, Object> result = new HashMap<>();
         String email = params.get("email");
 
-        // 1. 先校验参数
         if (!StringUtils.hasText(email)) {
             result.put("code", 400);
             result.put("message", "邮箱不能为空");
             return result;
         }
 
-        // 2. 然后去查 (这里不需要查数据库，直接生成验证码)
         String code = String.format("%06d", new Random().nextInt(999999));
 
-        // 3. 最后统一处理：发邮件并缓存
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
@@ -58,7 +56,7 @@ public class AuthController {
             message.setText("您的验证码为：" + code + "，请在5分钟内输入。如非本人操作，请忽略此邮件。");
             mailSender.send(message);
 
-            codeCache.put(email, code); // 存入缓存
+            codeCache.put(email, code);
 
             result.put("code", 200);
             result.put("message", "验证码发送成功");
@@ -76,23 +74,20 @@ public class AuthController {
     public Map<String, Object> register(@RequestBody Map<String, String> params) {
         Map<String, Object> result = new HashMap<>();
         String email = params.get("email");
-        String password = params.get("password");
+        String password = params.get("password"); // 此时收到的是前端发来的 SHA-256 密文
         String code = params.get("code");
 
-        // 1. 先校验参数
         if (!StringUtils.hasText(email) || !StringUtils.hasText(password) || !StringUtils.hasText(code)) {
             result.put("code", 400);
             result.put("message", "邮箱、密码或验证码不能为空");
             return result;
         }
 
-        // 2. 然后去查
         String savedCode = codeCache.get(email);
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getEmail, email);
         User existUser = userService.getOne(queryWrapper);
 
-        // 3. 最后统一处理
         if (!code.equals(savedCode)) {
             result.put("code", 400);
             result.put("message", "验证码错误或已失效");
@@ -105,12 +100,14 @@ public class AuthController {
         }
 
         User newUser = new User();
-        newUser.setUsername(email); // 默认使用邮箱作为账号名
+        newUser.setUsername(email);
         newUser.setEmail(email);
-        newUser.setPassword(password); // 提示：后续集成安全框架时，这里需要加密
+        // 【核心改造】：对前端传来的 SHA-256 密文进行 BCrypt 强哈希加盐，存入数据库
+        String hashedPwd = BCrypt.hashpw(password, BCrypt.gensalt());
+        newUser.setPassword(hashedPwd);
         userService.save(newUser);
 
-        codeCache.remove(email); // 注册成功后清除验证码
+        codeCache.remove(email);
 
         result.put("code", 200);
         result.put("message", "注册成功");
@@ -124,23 +121,20 @@ public class AuthController {
     public Map<String, Object> resetPwd(@RequestBody Map<String, String> params) {
         Map<String, Object> result = new HashMap<>();
         String email = params.get("email");
-        String newPassword = params.get("newPassword");
+        String newPassword = params.get("newPassword"); // 此时收到的是前端发来的 SHA-256 密文
         String code = params.get("code");
 
-        // 1. 先校验参数
         if (!StringUtils.hasText(email) || !StringUtils.hasText(newPassword) || !StringUtils.hasText(code)) {
             result.put("code", 400);
             result.put("message", "参数不完整");
             return result;
         }
 
-        // 2. 然后去查
         String savedCode = codeCache.get(email);
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getEmail, email);
         User existUser = userService.getOne(queryWrapper);
 
-        // 3. 最后统一处理
         if (!code.equals(savedCode)) {
             result.put("code", 400);
             result.put("message", "验证码错误或已失效");
@@ -152,7 +146,9 @@ public class AuthController {
             return result;
         }
 
-        existUser.setPassword(newPassword);
+        // 【核心改造】：同理，更新为加盐密文
+        String hashedPwd = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+        existUser.setPassword(hashedPwd);
         userService.updateById(existUser);
         codeCache.remove(email);
 
@@ -162,36 +158,37 @@ public class AuthController {
     }
 
     /**
-     * 邮箱登录 (暂无Token鉴权版)
+     * 邮箱登录 (发放 7 天 Token)
      */
     @PostMapping("/login")
     public Map<String, Object> login(@RequestBody Map<String, String> params) {
         Map<String, Object> result = new HashMap<>();
         String email = params.get("email");
-        String password = params.get("password");
+        String password = params.get("password"); // 此时收到的是前端发来的 SHA-256 密文
 
-        // 1. 先校验参数
         if (!StringUtils.hasText(email) || !StringUtils.hasText(password)) {
             result.put("code", 400);
             result.put("message", "邮箱或密码不能为空");
             return result;
         }
 
-        // 2. 然后去查
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getEmail, email);
         User user = userService.getOne(queryWrapper);
 
-        // 3. 最后统一处理
-        if (user == null || !user.getPassword().equals(password)) {
+        // 【核心改造】：使用 BCrypt.checkpw 校验（它会自动提取盐值对比前后的 SHA-256 密文是否一致）
+        if (user == null || !BCrypt.checkpw(password, user.getPassword())) {
             result.put("code", 400);
             result.put("message", "邮箱或密码错误");
             return result;
         }
 
+        // 【核心改造】：签发有效期为 7 天的真实 JWT
+        String token = JwtUtils.generateToken(user.getId());
+
         result.put("code", 200);
         result.put("message", "登录成功");
-        result.put("data", "mock-token-" + user.getId()); // 预留后续JWT的位置
+        result.put("data", token);
         return result;
     }
 }

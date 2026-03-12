@@ -1,12 +1,26 @@
 package com.personal.system.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 
+    @Autowired
+    private JwtInterceptor jwtInterceptor;
+
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        // 拦截所有 /api 开头的请求
+        registry.addInterceptor(jwtInterceptor)
+                .addPathPatterns("/api/**")
+                // 但放行登录、注册、发送验证码等公开接口
+                .excludePathPatterns("/api/auth/**");
+    }
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         // 允许跨域访问的路径
