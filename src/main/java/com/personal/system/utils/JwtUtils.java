@@ -8,7 +8,7 @@ import java.util.Date;
 
 public class JwtUtils {
     // 秘钥（请保管好，最好放在配置文件里，这里为了方便演示直接写死）
-    private static final String SECRET_KEY = "MyPersonalSystemSecretKey";
+    private static final String SECRET_KEY = "TXlQZXJzb25hbFN5c3RlbVNlY3JldEtleQ==";
     // 过期时间：7天 (毫秒)
     private static final long EXPIRATION_TIME = 1000L * 60 * 60 * 24 * 7;
 
@@ -35,6 +35,8 @@ public class JwtUtils {
                     .getBody();
             return Long.parseLong(claims.getSubject());
         } catch (Exception e) {
+            System.err.println("====== Token 解析失败！真凶如下 ======");
+            e.printStackTrace();
             return null; // 解析失败或已过期
         }
     }
