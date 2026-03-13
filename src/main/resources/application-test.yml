@@ -1,0 +1,10 @@
+server:
+  port: 40910 # 本地运行端口
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 本地数据库连接
+    url: jdbc:mysql://127.0.0.1:3306/personal_system?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456

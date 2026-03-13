@@ -1,12 +1,9 @@
-server:
-  port: 40910
-
 spring:
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/personal_system?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
-    username: root
-    password: 123456
+  profiles:
+    # 默认激活本地测试环境，在 IDEA 启动时会自动读取 application-test.yml
+    active: prod
+
+  # 邮件服务配置 (前后端通用)
   mail:
     host: smtp.qq.com
     port: 465
@@ -20,9 +17,10 @@ spring:
             enable: true
 
 mybatis-plus:
-  # ?? MyBatis-Plus ?? xml ???????
+  # MyBatis-Plus 的 xml 映射文件路径
   mapper-locations: classpath*:/mapper/**/*.xml
   configuration:
-    # ????? SQL ?????????????????
+    # 打印 SQL 语句到控制台，方便调试
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-    map-underscore-to-camel-case: true # ???????? (? user_id ???? userId)
+    # 开启驼峰命名自动映射 (如 user_id 映射到 userId)
+    map-underscore-to-camel-case: true
