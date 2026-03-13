@@ -21,13 +21,23 @@ jobs:
       - name: 📦 Maven 打包编译
         run: mvn clean package -DskipTests
 
+      # 【新增步骤】：统一重命名 jar 包，消除硬编码版本号带来的脆弱性
+      - name: 🔍 提取并重命名运行包
+        run: |
+          cd target
+          # 根据文件大小排序，取最大的那个 jar (Spring Boot 的 Fat Jar 通常最大，可有效排除 .original 包)
+          JAR_FILE=$(ls -S *.jar | head -n 1)
+          mv "$JAR_FILE" app.jar
+          echo "✅ 已将 $JAR_FILE 重命名为 app.jar 准备上传"
+
       - name: 📤 上传 Jar 包到阿里云
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          source: "target/personal-system-api-0.0.1-SNAPSHOT.jar"
+          # 【修改点】：不再写死带版本号的名字，统一传 app.jar
+          source: "target/app.jar"
           target: "/personal-system/personal-system-api-temp/"
           strip_components: 1
 
@@ -38,15 +48,15 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            # 【修改点 2】：自动创建你指定的后端真实目录，并进入
             mkdir -p /personal-system/personal-system-api
             cd /personal-system/personal-system-api
             
+            # 【修改点】：备份和启动都使用统一的 app.jar
             # 备份老包 (防备滚)
-            mv personal-system-api-0.0.1-SNAPSHOT.jar personal-system-api.bak || true
+            mv app.jar app.bak || true
             
             # 把新包从临时目录移过来
-            mv /personal-system/personal-system-api-temp/personal-system-api-0.0.1-SNAPSHOT.jar ./
+            mv /personal-system/personal-system-api-temp/app.jar ./
             
             # 杀掉运行在 40910 端口的旧进程
             PID=$(lsof -t -i:40910)
@@ -56,5 +66,5 @@ jobs:
             fi
             
             # 启动新进程
-            nohup java -jar personal-system-api-0.0.1-SNAPSHOT.jar > log.txt 2>&1 &
+            nohup java -jar app.jar > log.txt 2>&1 &
             echo "✅ 后端服务已成功部署到 /personal-system/personal-system-api！"
