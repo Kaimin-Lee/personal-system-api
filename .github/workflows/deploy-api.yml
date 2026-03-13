@@ -3,8 +3,6 @@ name: 🚀 部署后端 (LifeOS API)
 on:
   push:
     branches: [ "main", "master" ]
-    paths:
-      - 'personal-system-api/**'
 
 jobs:
   build-and-deploy:
@@ -21,7 +19,6 @@ jobs:
           distribution: 'temurin'
 
       - name: 📦 Maven 打包编译
-        working-directory: ./personal-system-api
         run: mvn clean package -DskipTests
 
       - name: 📤 上传 Jar 包到阿里云
@@ -30,10 +27,9 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          source: "personal-system-api/target/personal-system-api-0.0.1-SNAPSHOT.jar"
-          # 【修改点 1】：传送到你指定的后端临时目录
+          source: "target/personal-system-api-0.0.1-SNAPSHOT.jar"
           target: "/personal-system/personal-system-api-temp/"
-          strip_components: 2
+          strip_components: 1
 
       - name: 🔄 重启后端服务
         uses: appleboy/ssh-action@master
