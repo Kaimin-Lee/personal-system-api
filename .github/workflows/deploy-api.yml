@@ -1,0 +1,64 @@
+name: 🚀 部署后端 (LifeOS API)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    paths:
+      - 'personal-system-api/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 拉取最新代码
+        uses: actions/checkout@v3
+
+      - name: ☕ 配置 Java 17 环境
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: 📦 Maven 打包编译
+        working-directory: ./personal-system-api
+        run: mvn clean package -DskipTests
+
+      - name: 📤 上传 Jar 包到阿里云
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "personal-system-api/target/personal-system-api-0.0.1-SNAPSHOT.jar"
+          # 【修改点 1】：传送到你指定的后端临时目录
+          target: "/personal-system/personal-system-api-temp/"
+          strip_components: 2
+
+      - name: 🔄 重启后端服务
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            # 【修改点 2】：自动创建你指定的后端真实目录，并进入
+            mkdir -p /personal-system/personal-system-api
+            cd /personal-system/personal-system-api
+            
+            # 备份老包 (防备滚)
+            mv personal-system-api-0.0.1-SNAPSHOT.jar personal-system-api.bak || true
+            
+            # 把新包从临时目录移过来
+            mv /personal-system/personal-system-api-temp/personal-system-api-0.0.1-SNAPSHOT.jar ./
+            
+            # 杀掉运行在 40910 端口的旧进程
+            PID=$(lsof -t -i:40910)
+            if [ -n "$PID" ]; then
+              echo "Killing old process: $PID"
+              kill -9 $PID
+            fi
+            
+            # 启动新进程
+            nohup java -jar personal-system-api-0.0.1-SNAPSHOT.jar > log.txt 2>&1 &
+            echo "✅ 后端服务已成功部署到 /personal-system/personal-system-api！"

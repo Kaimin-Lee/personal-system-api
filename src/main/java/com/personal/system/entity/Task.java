@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
@@ -44,11 +46,11 @@ public class Task implements Serializable {
 
     @ApiModelProperty("状态: 0-待办(To Do), 1-进行中(Doing), 2-已完成(Done)")
     @TableField("status")
-    private Byte status;
+    private Integer status;
 
     @ApiModelProperty("优先级: 0-低, 1-中, 2-高")
     @TableField("priority")
-    private Byte priority;
+    private Integer priority;
 
     @ApiModelProperty("看板拖拽排序序号")
     @TableField("sort_order")
@@ -56,6 +58,7 @@ public class Task implements Serializable {
 
     @ApiModelProperty("截止日期")
     @TableField("deadline")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime deadline;
 
     @TableField("create_time")
