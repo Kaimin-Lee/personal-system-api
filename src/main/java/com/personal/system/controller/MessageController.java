@@ -52,9 +52,15 @@ public class MessageController {
     }
 
     // 5. 标记消息为已读
+    // 5. 标记消息为已读
     @PostMapping("/read")
-    public Result<Void> markAsRead(@RequestParam(required = false) Long targetId) {
-        messageService.markAsRead(UserContext.getUserId(), targetId);
+    public Result<Void> markAsRead(@RequestParam(required = false) String targetId) {
+        Long tId = null;
+        if (targetId != null && !"null".equals(targetId) && !"undefined".equals(targetId) && !targetId.trim().isEmpty()) {
+            tId = Long.valueOf(targetId);
+        }
+
+        messageService.markAsRead(UserContext.getUserId(), tId);
         return Result.success("已读", null);
     }
 }
