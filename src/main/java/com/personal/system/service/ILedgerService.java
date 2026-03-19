@@ -2,6 +2,8 @@ package com.personal.system.service;
 
 import com.personal.system.entity.Ledger;
 import com.baomidou.mybatisplus.extension.service.IService;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -13,4 +15,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface ILedgerService extends IService<Ledger> {
 
+    List<Ledger> getMyLedgers(Long userId, Byte type, String category, String month);
+
+    Map<String, Object> getMonthlySummary(Long userId, String month);
 }

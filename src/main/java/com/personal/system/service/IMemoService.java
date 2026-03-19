@@ -2,6 +2,7 @@ package com.personal.system.service;
 
 import com.personal.system.entity.Memo;
 import com.baomidou.mybatisplus.extension.service.IService;
+import java.util.List;
 
 /**
  * <p>
@@ -13,4 +14,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface IMemoService extends IService<Memo> {
 
+    List<Memo> getMyMemos(Long userId, String keyword);
+
+    void togglePin(Long id, Long userId);
 }

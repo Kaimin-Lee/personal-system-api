@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
@@ -100,9 +101,20 @@ public class AuthController {
         }
 
         User newUser = new User();
-        newUser.setUsername(email);
+        // 生成不重复的随机用户名：user_ + 8位随机字母数字
+        String username;
+        do {
+            username = "user_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+            LambdaQueryWrapper<User> uq = new LambdaQueryWrapper<>();
+            uq.eq(User::getUsername, username);
+            if (userService.getOne(uq) == null) break;
+        } while (true);
+        newUser.setUsername(username);
         newUser.setEmail(email);
-        // 【核心改造】：对前端传来的 SHA-256 密文进行 BCrypt 强哈希加盐，存入数据库
+        // 用邮箱前缀作为默认昵称
+        newUser.setNickname(email.split("@")[0]);
+        // 默认头像（dicebear 随机风格）
+        newUser.setAvatar("https://api.dicebear.com/7.x/bottts/svg?seed=" + username);
         String hashedPwd = BCrypt.hashpw(password, BCrypt.gensalt());
         newUser.setPassword(hashedPwd);
         userService.save(newUser);
