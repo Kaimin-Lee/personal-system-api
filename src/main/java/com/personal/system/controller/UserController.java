@@ -81,6 +81,18 @@ public class UserController {
         return Result.success("上传成功", url);
     }
 
+    @GetMapping("/info/{id}")
+    public Result<Map<String, Object>> getUserInfo(@PathVariable Long id) {
+        User user = userService.getById(id);
+        if (user == null) throw new BusinessException("用户不存在");
+        Map<String, Object> data = new HashMap<>();
+        data.put("id", user.getId());
+        data.put("username", user.getUsername());
+        data.put("nickname", user.getNickname());
+        data.put("avatar", user.getAvatar());
+        return Result.success(data);
+    }
+
     @PostMapping("/password")
     public Result<Void> changePassword(@RequestBody Map<String, String> params) {
         User user = userService.getById(UserContext.getUserId());
