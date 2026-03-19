@@ -20,6 +20,9 @@ public class Note {
     private Long folderId;
     private String tags;
 
+    private Integer isPinned;
+    private Integer isDeleted;
+
     @TableField(fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
