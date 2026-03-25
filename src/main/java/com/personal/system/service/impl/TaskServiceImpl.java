@@ -21,6 +21,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
         LambdaQueryWrapper<Task> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Task::getUserId, UserContext.getUserId())
                 .orderByDesc(Task::getPriority)
+                .orderByDesc(Task::getSortOrder)
                 .orderByDesc(Task::getCreateTime);
         return this.list(wrapper);
     }
