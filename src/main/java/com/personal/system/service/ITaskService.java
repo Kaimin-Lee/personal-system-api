@@ -21,4 +21,7 @@ public interface ITaskService extends IService<Task> {
 
     // 删除任务
     boolean deleteMyTask(Long id);
+
+    // 批量更新任务排序
+    boolean updateTaskSort(Integer status, List<Long> sortedIds);
 }

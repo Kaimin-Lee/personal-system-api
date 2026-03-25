@@ -1,6 +1,7 @@
 package com.personal.system.controller;
 
 import com.personal.system.common.Result;
+import com.personal.system.dto.UpdateSortDTO;
 import com.personal.system.entity.Task;
 import com.personal.system.service.ITaskService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,5 +49,14 @@ public class TaskController {
             return Result.success("删除成功", null);
         }
         return Result.error("无权操作或任务不存在");
+    }
+
+    // 后端 Controller 伪代码参考
+    @PutMapping("/updateSort")
+    public Result<Void> updateSort(@RequestBody UpdateSortDTO dto) {
+        if (taskService.updateTaskSort(dto.getStatus(), dto.getSortedIds())) {
+            return Result.success("排序已更新", null);
+        }
+        return Result.error("更新排序失败");
     }
 }
