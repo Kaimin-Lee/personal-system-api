@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
@@ -54,6 +55,7 @@ public class Ledger implements Serializable {
 
     @ApiModelProperty("发生日期")
     @TableField("record_date")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate recordDate;
 
     @ApiModelProperty("备注说明")
@@ -61,8 +63,10 @@ public class Ledger implements Serializable {
     private String remark;
 
     @TableField("create_time")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 
     @TableField("update_time")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime updateTime;
 }

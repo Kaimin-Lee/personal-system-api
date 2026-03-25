@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
@@ -41,6 +42,7 @@ public class Countdown implements Serializable {
 
     @ApiModelProperty("目标日期")
     @TableField("target_date")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate targetDate;
 
     @ApiModelProperty("是否固定在首页看板: 0-否, 1-是")
@@ -48,5 +50,6 @@ public class Countdown implements Serializable {
     private Boolean isPinned;
 
     @TableField("create_time")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 }

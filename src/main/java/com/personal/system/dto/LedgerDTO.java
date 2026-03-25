@@ -2,6 +2,7 @@ package com.personal.system.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -24,6 +25,7 @@ public class LedgerDTO {
         private String accountType;
 
         @NotNull(message = "发生日期不能为空")
+        @JsonFormat(pattern = "yyyy-MM-dd")
         private LocalDate recordDate;
 
         private String remark;

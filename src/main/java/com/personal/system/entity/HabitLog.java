@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
@@ -41,6 +42,7 @@ public class HabitLog implements Serializable {
 
     @ApiModelProperty("打卡日期")
     @TableField("record_date")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate recordDate;
 
     @ApiModelProperty("打卡心情或备注 (例如：今天练了胸肌，很累)")
@@ -48,5 +50,6 @@ public class HabitLog implements Serializable {
     private String memo;
 
     @TableField("create_time")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 }
