@@ -1,18 +1,21 @@
 package com.personal.system.controller;
 
 import com.personal.system.common.Result;
+import com.personal.system.dto.GeometryDTO;
 import com.personal.system.entity.Geometry;
 import com.personal.system.service.IGeometryService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/geometry")
+@RequiredArgsConstructor
 public class GeometryController {
 
-    @Autowired
-    private IGeometryService geometryService;
+    private final IGeometryService geometryService;
 
     @GetMapping("/history")
     public Result<List<Geometry>> getHistory() {
@@ -20,7 +23,11 @@ public class GeometryController {
     }
 
     @PostMapping("/history")
-    public Result<Void> addHistory(@RequestBody Geometry history) {
+    public Result<Void> addHistory(@Valid @RequestBody GeometryDTO.AddHistoryDTO dto) {
+        Geometry history = new Geometry();
+        history.setShapeName(dto.getShapeName());
+        history.setParams(dto.getParams());
+        history.setResult(dto.getResult());
         geometryService.addHistory(history);
         return Result.success("保存成功", null);
     }

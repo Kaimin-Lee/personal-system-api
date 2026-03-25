@@ -2,21 +2,22 @@ package com.personal.system.controller;
 
 import com.personal.system.common.BusinessException;
 import com.personal.system.common.Result;
+import com.personal.system.dto.MemoDTO;
 import com.personal.system.entity.Memo;
 import com.personal.system.service.IMemoService;
 import com.personal.system.utils.UserContext;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/memo")
+@RequiredArgsConstructor
 public class MemoController {
 
     private final IMemoService memoService;
-
-    public MemoController(IMemoService memoService) {
-        this.memoService = memoService;
-    }
 
     @GetMapping("/list")
     public Result<List<Memo>> list(@RequestParam(required = false) String keyword) {
@@ -24,7 +25,11 @@ public class MemoController {
     }
 
     @PostMapping("/save")
-    public Result<Memo> save(@RequestBody Memo memo) {
+    public Result<Memo> save(@Valid @RequestBody MemoDTO.SaveMemoDTO dto) {
+        Memo memo = new Memo();
+        memo.setId(dto.getId());
+        memo.setContent(dto.getContent());
+        memo.setBgColor(dto.getBgColor());
         memo.setUserId(UserContext.getUserId());
         if (memo.getId() == null) memo.setIsPinned(false);
         memoService.saveOrUpdate(memo);

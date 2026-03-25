@@ -1,21 +1,22 @@
 package com.personal.system.controller;
 
 import com.personal.system.common.Result;
+import com.personal.system.dto.NoteDTO;
 import com.personal.system.entity.Note;
 import com.personal.system.service.INoteService;
 import com.personal.system.utils.UserContext;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/note")
+@RequiredArgsConstructor
 public class NoteController {
 
     private final INoteService noteService;
-
-    public NoteController(INoteService noteService) {
-        this.noteService = noteService;
-    }
 
     @GetMapping("/list")
     public Result<List<Note>> list(
@@ -25,7 +26,13 @@ public class NoteController {
     }
 
     @PostMapping("/save")
-    public Result<Note> save(@RequestBody Note note) {
+    public Result<Note> save(@Valid @RequestBody NoteDTO.SaveNoteDTO dto) {
+        Note note = new Note();
+        note.setId(dto.getId());
+        note.setTitle(dto.getTitle());
+        note.setContent(dto.getContent());
+        note.setFolderId(dto.getFolderId());
+        note.setTags(dto.getTags());
         noteService.saveNote(note, UserContext.getUserId());
         return Result.success("保存成功", note);
     }

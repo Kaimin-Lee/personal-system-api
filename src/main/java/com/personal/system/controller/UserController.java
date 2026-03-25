@@ -2,14 +2,18 @@ package com.personal.system.controller;
 
 import com.personal.system.common.BusinessException;
 import com.personal.system.common.Result;
+import com.personal.system.dto.UserDTO;
 import com.personal.system.entity.User;
 import com.personal.system.service.IUserService;
 import com.personal.system.utils.UserContext;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -18,6 +22,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/user")
+@RequiredArgsConstructor
 public class UserController {
 
     private final IUserService userService;
@@ -27,10 +32,6 @@ public class UserController {
 
     @Value("${upload.base-url:http://localhost:40910}")
     private String baseUrl;
-
-    public UserController(IUserService userService) {
-        this.userService = userService;
-    }
 
     @GetMapping("/profile")
     public Result<Map<String, Object>> getProfile() {
@@ -47,13 +48,11 @@ public class UserController {
     }
 
     @PostMapping("/profile")
-    public Result<Void> updateProfile(@RequestBody Map<String, String> params) {
+    public Result<Void> updateProfile(@RequestBody UserDTO.UpdateProfileDTO dto) {
         User user = userService.getById(UserContext.getUserId());
         if (user == null) throw new BusinessException("用户不存在");
-        String nickname = params.get("nickname");
-        if (StringUtils.hasText(nickname)) user.setNickname(nickname);
-        String avatar = params.get("avatar");
-        if (StringUtils.hasText(avatar)) user.setAvatar(avatar);
+        if (StringUtils.hasText(dto.getNickname())) user.setNickname(dto.getNickname());
+        if (StringUtils.hasText(dto.getAvatar())) user.setAvatar(dto.getAvatar());
         userService.updateById(user);
         return Result.success("更新成功", null);
     }
@@ -94,16 +93,12 @@ public class UserController {
     }
 
     @PostMapping("/password")
-    public Result<Void> changePassword(@RequestBody Map<String, String> params) {
+    public Result<Void> changePassword(@Valid @RequestBody UserDTO.ChangePasswordDTO dto) {
         User user = userService.getById(UserContext.getUserId());
         if (user == null) throw new BusinessException("用户不存在");
-        String oldPassword = params.get("oldPassword");
-        String newPassword = params.get("newPassword");
-        if (!StringUtils.hasText(oldPassword) || !StringUtils.hasText(newPassword))
-            throw new BusinessException("参数不完整");
-        if (!BCrypt.checkpw(oldPassword, user.getPassword()))
+        if (!BCrypt.checkpw(dto.getOldPassword(), user.getPassword()))
             throw new BusinessException("原密码错误");
-        user.setPassword(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
+        user.setPassword(BCrypt.hashpw(dto.getNewPassword(), BCrypt.gensalt()));
         userService.updateById(user);
         return Result.success("密码修改成功", null);
     }
